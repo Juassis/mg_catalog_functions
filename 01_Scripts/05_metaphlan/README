@@ -1,0 +1,5 @@
+First run:
+python merge_metaphlan_tables.py db1/*metaphlan_profile.txt > merged_abundance_table.tsv
+
+Second:
+Use the R rmd

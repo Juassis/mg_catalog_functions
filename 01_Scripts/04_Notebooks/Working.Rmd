@@ -21,6 +21,7 @@ meta_full$`Mouse ID` <- factor(meta_full$`Mouse ID`)
 meta_full$shotgun_file <- meta_full$`Sample Name`
 ```
 
+## Testing
 
 ```{r}
 library(tidyverse)
@@ -83,14 +84,14 @@ print(ec_summary_group)
 print(ko_summary_group)
 
 # Save results
-write_tsv(ec_summary_sample, file.path(base_dir, "EC_Number_Summary_per_Sample.tsv"))
-write_tsv(ko_summary_sample, file.path(base_dir, "KEGG_ID_Summary_per_Sample.tsv"))
-write_tsv(ec_summary_group, file.path(base_dir, "EC_Number_Summary_per_Group.tsv"))
-write_tsv(ko_summary_group, file.path(base_dir, "KEGG_ID_Summary_per_Group.tsv"))
+#write_tsv(ec_summary_sample, file.path(base_dir, "EC_Number_Summary_per_Sample.tsv"))
+#write_tsv(ko_summary_sample, file.path(base_dir, "KEGG_ID_Summary_per_Sample.tsv"))
+#write_tsv(ec_summary_group, file.path(base_dir, "EC_Number_Summary_per_Group.tsv"))
+#write_tsv(ko_summary_group, file.path(base_dir, "KEGG_ID_Summary_per_Group.tsv"))
 
 ```
 
-
+## More
 
 ```{r}
 library(tidyverse)
@@ -151,11 +152,12 @@ print(ec_summary_long)
 print(ko_summary_long)
 
 # Save results
-write_tsv(ec_summary_long, file.path(base_dir, "EC_Number_per_Group.tsv"))
-write_tsv(ko_summary_long, file.path(base_dir, "KEGG_ID_per_Group.tsv"))
+#write_tsv(ec_summary_long, file.path(base_dir, "EC_Number_per_Group.tsv"))
+#write_tsv(ko_summary_long, file.path(base_dir, "KEGG_ID_per_Group.tsv"))
 
 ```
 
+# More
 
 ```{r}
 library(ComplexUpset)

@@ -1,0 +1,94 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+```
+
+# Read the merged abundance table from Metaphlan
+
+```{r}
+metaphlan_abundance_table <- read.table("/merged_abundance_table.tsv", header = TRUE)
+```
+
+
+
+```{r}
+metaphlan_merged_abundance_table_converter <- function(merged_abundance_table){
+  # - kick out UNKNOWN if there and change names -
+  merged_abundance_table <- dplyr::filter(merged_abundance_table, clade_name != "UNKNOWN")
+  colnames(merged_abundance_table) <- str_remove(colnames(merged_abundance_table), "_pe_db1.metaphlan")
+   merged_abundance_table$level <- NA
+  prefix_lu <- data.frame(prefix = c("k__", "p__", "c__", "o__", "f__", "g__", "s__", "t__"),
+                          level = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain"))
+  for (c_prefix in prefix_lu$prefix){
+    merged_abundance_table$level[str_detect(merged_abundance_table$clade_name, c_prefix)] <- prefix_lu$level[prefix_lu$prefix == c_prefix]
+  }
+  
+  merged_abundance_table$level <- factor(merged_abundance_table$level, levels = prefix_lu$level)
+  abundance_table_list <- split(merged_abundance_table, f = merged_abundance_table$level)
+  # --
+  # - change taxonomy into separate columns -
+  abundance_table_list2 <- lapply(abundance_table_list, function(c_df){
+    c_df <- dplyr::select(c_df, taxonomy = clade_name, everything(), -level)
+    c_df <- tidyr::separate(c_df, col = `taxonomy`, into = c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain"), sep = "\\|", extra = "merge")
+    prefix_check <- Map(f = function(level, prefix){
+      str_detect(level, prefix)
+    }, level = dplyr::select(c_df, kingdom:strain)[], prefix = c("^k__", "^p__", "^c__", "^o__", "^f__", "^g__", "^s__", "^t__"))
+    if (!all(sapply(prefix_check, all), na.rm = TRUE)){stop("you couldn't do it so easily")}
+    c_df[c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain")] <- lapply(c_df[c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain")], function(x){
+      x <- str_remove(x, "^[kpcofgst]__")
+      #x <- str_remove(x, "_[A-Z]$")
+      #x <- str_remove(x, "_[A-Z]{2}$")
+      x
+    })
+    c_df[c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain")] <- lapply(c_df[c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain")], str_trim)
+    c_df
+  })
+  # --
+  abundance_table_list2
+}
+```
+
+
+
+```{r}
+abundance_list <- metaphlan_merged_abundance_table_converter(metaphlan_abundance_table)
+```
+
+
+# Getting the abundace for species (HERE YOU CHOOSE the rank you want)
+
+```{r}
+comp <- abundance_list[["species"]]
+#comp <- abundance_list[["phylum"]]
+```
+
+# Separating the annotations and the data to match the next scripts
+
+```{r}
+comp$tax <- paste0("Tax_", sprintf(fmt = paste0("%0.", floor(log10(nrow(comp))) + 1,  "d"), 1:nrow(comp)))
+
+annotations_m <- dplyr::select(comp, kingdom:species)
+rownames(annotations_m) <- comp$tax
+annotations_m$species <- str_replace(annotations_m$species, "_", " ")
+data_m <- dplyr::select(comp, tax, everything(), -c("kingdom", "phylum", "class", "order", "family", "genus", "species", "strain"))
+data_m <- data_m %>% remove_rownames() %>%  column_to_rownames("tax")
+data_m <- t(data_m)
+rowSums(data_m)
+```
+
+# Saving the files
+
+```{r}
+write_rds(annotations_m, file = "/MetaphlanAnnotations_upSpecies.rds")
+write_rds(data_m, file = "/MetaphlanAbundance_upSpecies.rds")
+#write_rds(annotations_m, file = "MetaphlanAnnotations_upPhylum.rds")
+#write_rds(data_m, file = "MetaphlanAbundance_upPhylum.rds")
+```
+
+
+
